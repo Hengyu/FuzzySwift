@@ -67,6 +67,17 @@ struct ProcessTests {
         }
     }
 
+    @Test("extractBests with limit larger than results returns all matches")
+    func extractBestsLargeLimit() {
+        let results = FuzzyProcess.extractBests(
+            query: "new york",
+            choices: choices,
+            cutoff: 0,
+            limit: 100
+        )
+        #expect(results.count == choices.count)
+    }
+
     // MARK: - dedupe
 
     @Test("dedupe removes near-duplicates")
@@ -79,9 +90,7 @@ struct ProcessTests {
             "dallas cowboys",
         ]
         let result = FuzzyProcess.dedupe(items, threshold: 70)
-        // Should keep fewer items than the original
         #expect(result.count < items.count)
-        // Should keep at least 1 per distinct group
         #expect(result.count >= 1)
     }
 
@@ -95,5 +104,33 @@ struct ProcessTests {
         let items = ["apple", "banana", "cherry"]
         let result = FuzzyProcess.dedupe(items, threshold: 90)
         #expect(result.count == 3)
+    }
+
+    @Test("dedupe keeps longest string from each group")
+    func dedupeKeepsLongest() {
+        let items = [
+            "NY Mets",
+            "New York Mets",
+        ]
+        let result = FuzzyProcess.dedupe(items, threshold: 60)
+        #expect(result.count == 1)
+        #expect(result[0] == "New York Mets")
+    }
+
+    @Test("dedupe preserves original order of kept items")
+    func dedupeOrder() {
+        let items = [
+            "Dallas Cowboys",
+            "dallas cowboys football",
+            "New York Giants",
+        ]
+        let result = FuzzyProcess.dedupe(items, threshold: 70)
+        // Should keep "dallas cowboys football" (longer) and "New York Giants"
+        // Indices of kept items should be in ascending order
+        for i in 1..<result.count {
+            let idx1 = items.firstIndex(of: result[i - 1])!
+            let idx2 = items.firstIndex(of: result[i])!
+            #expect(idx1 < idx2)
+        }
     }
 }

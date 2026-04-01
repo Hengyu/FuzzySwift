@@ -54,10 +54,7 @@ public enum FuzzyProcess {
             }
         }
         matches.sort { $0.score > $1.score }
-        if matches.count > limit {
-            matches = Array(matches.prefix(limit))
-        }
-        return matches
+        return Array(matches.prefix(limit))
     }
 
     /// Removes near-duplicate strings using fuzzy matching.
